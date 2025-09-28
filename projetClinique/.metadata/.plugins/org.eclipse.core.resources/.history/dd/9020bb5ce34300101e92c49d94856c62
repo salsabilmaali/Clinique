@@ -1,0 +1,11 @@
+package com.example.demo.Models;
+
+@Entity
+public class Patient extends Utilisateur {
+
+    @OneToOne(mappedBy = "patient", cascade = CascadeType.ALL)
+    private DossierMedical dossierMedical;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+    private List<RendezVous> rendezVous;
+}

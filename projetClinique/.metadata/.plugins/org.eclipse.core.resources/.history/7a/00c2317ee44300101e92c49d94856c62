@@ -1,0 +1,22 @@
+package com.example.demo.Controllers;
+
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class RedirectController {
+
+    @GetMapping("/redirect")
+    public String redirectByRole(Authentication authentication) {
+        String role = authentication.getAuthorities().iterator().next().getAuthority();
+
+        return switch (role) {
+            case "ADMIN" -> "redirect:/admin/dashboard";
+            case "MEDECIN" -> "redirect:/medecin/home";
+            case "PATIENT" -> "redirect:/patient/home";
+            case "SECRETAIRE" -> "redirect:/secretaire/home";
+            default -> "redirect:/login?error";
+        };
+    }
+}

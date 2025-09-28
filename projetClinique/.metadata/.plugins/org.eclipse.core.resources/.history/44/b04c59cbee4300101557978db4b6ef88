@@ -1,0 +1,56 @@
+package com.example.demo.Controllers;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.demo.Models.Utilisateur;
+import com.example.demo.Repositories.UtilisateurRepository;
+
+import org.springframework.ui.Model; 
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class LoginController {
+
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login"; // retourne login.html
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestParam String email,
+                        @RequestParam String motDePasse,
+                        HttpSession session,
+                        Model model) {
+        Optional<Utilisateur> optionalUser = utilisateurRepository.findByEmailAndMotDePasse(email, motDePasse);
+        
+        if (optionalUser.isPresent()) {
+            Utilisateur utilisateur = optionalUser.get();
+            session.setAttribute("utilisateur", utilisateur);
+
+            return switch (utilisateur.getRole()) {
+                case ADMIN -> "redirect:/admin/dashboard";
+                case MEDECIN -> "redirect:/medecin/home";
+                case PATIENT -> "redirect:/patient/home";
+                case SECRETAIRE -> "redirect:/secretaire/home";
+            };
+        } else {
+            model.addAttribute("error", "Email ou mot de passe incorrect");
+            return "login";
+        }
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}

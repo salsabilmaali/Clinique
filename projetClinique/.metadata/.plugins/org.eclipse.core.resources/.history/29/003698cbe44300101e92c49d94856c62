@@ -1,0 +1,27 @@
+package com.example.demo.Services;
+
+import java.util.Collections;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.Repositories.UtilisateurRepository;
+
+@Service
+
+public class UserDetailsServiceImpl implements UserDetailsService {
+
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Utilisateur user = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getMotDePasse(),
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().name()))
+        );
+    }
+}

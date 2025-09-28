@@ -1,0 +1,75 @@
+package com.example.demo.Controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.Models.DossierMedical;
+import com.example.demo.Services.DossierMedicalService;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/dossiers-medicaux")
+@CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
+public class DossierMedicalController {
+    
+    @Autowired
+    private DossierMedicalService dossierMedicalService;
+    
+    @GetMapping
+    public ResponseEntity<List<DossierMedical>> getAllDossiersMedicaux() {
+        List<DossierMedical> dossiers = dossierMedicalService.getAllDossiersMedicaux();
+        return new ResponseEntity<>(dossiers, HttpStatus.OK);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<DossierMedical> getDossierMedicalById(@PathVariable Long id) {
+        Optional<DossierMedical> dossier = dossierMedicalService.getDossierMedicalById(id);
+        return dossier.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+    
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<DossierMedical> getDossierMedicalByPatientId(@PathVariable Long patientId) {
+        Optional<DossierMedical> dossier = dossierMedicalService.getDossierMedicalByPatientId(patientId);
+        return dossier.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+    
+    @PostMapping("/patient/{patientId}")
+    public ResponseEntity<DossierMedical> createDossierMedical(
+            @RequestBody DossierMedical dossierMedical,
+            @PathVariable Long patientId) {
+        try {
+            DossierMedical newDossier = dossierMedicalService.createDossierMedical(dossierMedical, patientId);
+            return new ResponseEntity<>(newDossier, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<DossierMedical> updateDossierMedical(
+            @PathVariable Long id,
+            @RequestBody DossierMedical dossierMedical) {
+        try {
+            DossierMedical updatedDossier = dossierMedicalService.updateDossierMedical(id, dossierMedical);
+            return new ResponseEntity<>(updatedDossier, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDossierMedical(@PathVariable Long id) {
+        try {
+            dossierMedicalService.deleteDossierMedical(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+}

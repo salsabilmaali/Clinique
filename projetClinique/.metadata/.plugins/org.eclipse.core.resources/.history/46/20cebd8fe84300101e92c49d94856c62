@@ -1,0 +1,16 @@
+package com.example.demo.Models;
+@Entity
+public class RendezVous {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime date;
+    private String statut; // "Planifié", "Annulé", "Terminé"
+
+    @ManyToOne
+    private Patient patient;
+
+    @ManyToOne
+    private Medecin medecin;
+}

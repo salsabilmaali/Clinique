@@ -1,0 +1,53 @@
+package com.example.demo.Controllers;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.Models.Utilisateur;
+import com.example.demo.Repositories.UtilisateurRepository;
+
+import org.springframework.ui.Model; 
+import jakarta.servlet.http.HttpSession;
+
+@RestController
+public class LoginController {
+
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login"; // retourne login.html
+    }
+
+@PostMapping("/login")
+    public ResponseEntity<?> login(@RequestParam String email,
+                                   @RequestParam String motDePasse,
+                                   HttpSession session) {
+        Optional<Utilisateur> optionalUser = utilisateurRepository.findByEmailAndMotDePasse(email, motDePasse);
+
+        if (optionalUser.isPresent()) {
+            Utilisateur utilisateur = optionalUser.get();
+            session.setAttribute("utilisateur", utilisateur);
+
+            // Return user info as JSON
+            return ResponseEntity.ok()
+                    .header("Set-Cookie", "JSESSIONID=" + session.getId())
+                    .body(utilisateur);
+        } else {
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+    }
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}

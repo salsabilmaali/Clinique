@@ -1,0 +1,79 @@
+package com.example.demo.Services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.Models.DossierMedical;
+import com.example.demo.Models.Patient;
+import com.example.demo.Repositories.DossierMedicalRepository;
+import com.example.demo.Repositories.PatientRepository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class DossierMedicalService {
+    
+    @Autowired
+    private DossierMedicalRepository dossierMedicalRepository;
+    
+    @Autowired
+    private PatientRepository patientRepository;
+    
+    public List<DossierMedical> getAllDossiersMedicaux() {
+        return dossierMedicalRepository.findAll();
+    }
+    
+    public Optional<DossierMedical> getDossierMedicalById(Long id) {
+        return dossierMedicalRepository.findById(id);
+    }
+    
+    public Optional<DossierMedical> getDossierMedicalByPatientId(Long patientId) {
+        return dossierMedicalRepository.findByPatientId(patientId);
+    }
+    
+    public DossierMedical createDossierMedical(DossierMedical dossierMedical, Long patientId) {
+        Optional<Patient> patientOpt = patientRepository.findById(patientId);
+        if (!patientOpt.isPresent()) {
+            throw new RuntimeException("Patient not found with ID: " + patientId);
+        }
+        
+        Patient patient = patientOpt.get();
+        
+        // Check if patient already has a medical record
+        Optional<DossierMedical> existingDossier = dossierMedicalRepository.findByPatient(patient);
+        if (existingDossier.isPresent()) {
+            throw new RuntimeException("Patient already has a medical record");
+        }
+        
+        dossierMedical.setPatient(patient);
+        if (dossierMedical.getDateCreation() == null) {
+            dossierMedical.setDateCreation(LocalDate.now());
+        }
+        
+        return dossierMedicalRepository.save(dossierMedical);
+    }
+    
+    public DossierMedical updateDossierMedical(Long id, DossierMedical dossierMedicalDetails) {
+        Optional<DossierMedical> dossierOpt = dossierMedicalRepository.findById(id);
+        if (!dossierOpt.isPresent()) {
+            throw new RuntimeException("Medical record not found with ID: " + id);
+        }
+        
+        DossierMedical existingDossier = dossierOpt.get();
+        existingDossier.setDiagnostic(dossierMedicalDetails.getDiagnostic());
+        existingDossier.setPrescription(dossierMedicalDetails.getPrescription());
+        
+        return dossierMedicalRepository.save(existingDossier);
+    }
+    
+    public void deleteDossierMedical(Long id) {
+        Optional<DossierMedical> dossierOpt = dossierMedicalRepository.findById(id);
+        if (!dossierOpt.isPresent()) {
+            throw new RuntimeException("Medical record not found with ID: " + id);
+        }
+        
+        dossierMedicalRepository.deleteById(id);
+    }
+}

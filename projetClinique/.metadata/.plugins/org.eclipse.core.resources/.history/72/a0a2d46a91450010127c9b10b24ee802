@@ -1,0 +1,140 @@
+package com.example.demo.Services;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.Models.Medecin;
+import com.example.demo.Models.Patient;
+import com.example.demo.Models.Role;
+import com.example.demo.Models.Secretaire;
+import com.example.demo.Models.Specialite;
+import com.example.demo.Models.Utilisateur;
+import com.example.demo.Repositories.UtilisateurRepository;
+
+import jakarta.servlet.http.HttpSession;
+
+@Service
+public class LoginService {
+
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
+    
+    /**
+     * Authenticate a user with email and password
+     * @param email User's email
+     * @param motDePasse User's password
+     * @return Optional containing the user if authentication is successful, empty otherwise
+     */
+    public Optional<Utilisateur> authenticate(String email, String motDePasse) {
+        return utilisateurRepository.findByEmailAndMotDePasse(email, motDePasse);
+    }
+    
+    /**
+     * Create a user response map for frontend consumption
+     * @param utilisateur The authenticated user
+     * @return Map containing user details
+     */
+    public Map<String, Object> createUserResponse(Utilisateur utilisateur) {
+        Map<String, Object> userResponse = new HashMap<>();
+        userResponse.put("id", utilisateur.getId());
+        userResponse.put("nom", utilisateur.getNom());
+        userResponse.put("prenom", utilisateur.getPrenom());
+        userResponse.put("email", utilisateur.getEmail());
+        userResponse.put("role", utilisateur.getRole().toString());
+        
+        // Add specialty for doctors
+        if (utilisateur instanceof Medecin) {
+            Medecin medecin = (Medecin) utilisateur;
+            if (medecin.getSpecialite() != null) {
+                userResponse.put("specialite", medecin.getSpecialite().name());
+            }
+        }
+        
+        return userResponse;
+    }
+    
+    /**
+     * Register a new user
+     * @param nom User's last name
+     * @param prenom User's first name
+     * @param email User's email
+     * @param motDePasse User's password
+     * @param role User's role
+     * @param specialite Doctor's specialty (only used if role is MEDECIN)
+     * @return The newly created user
+     * @throws IllegalArgumentException if email already exists
+     */
+    public Utilisateur registerUser(String nom, String prenom, String email, String motDePasse, Role role, Specialite specialite) {
+        // Check if email already exists
+        if (utilisateurRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        
+        // Create new user based on role
+        Utilisateur newUser;
+        
+        switch (role) {
+            case PATIENT:
+                newUser = new Patient();
+                break;
+            case MEDECIN:
+                Medecin medecin = new Medecin();
+                if (specialite != null) {
+                    medecin.setSpecialite(specialite);
+                }
+                newUser = medecin;
+                break;
+            case SECRETAIRE:
+                newUser = new Secretaire();
+                break;
+            default:
+                newUser = new Utilisateur();
+        }
+        
+        // Set common user properties
+        newUser.setNom(nom);
+        newUser.setPrenom(prenom);
+        newUser.setEmail(email);
+        newUser.setMotDePasse(motDePasse);
+        newUser.setRole(role);
+        newUser.setDateInscription(LocalDateTime.now());
+        
+        // Save the user
+        return utilisateurRepository.save(newUser);
+    }
+    
+    /**
+     * Set the current authenticated user in the session
+     * @param session The HTTP session
+     * @param utilisateur The authenticated user
+     */
+    public void setSessionUser(HttpSession session, Utilisateur utilisateur) {
+        session.setAttribute("userId", utilisateur.getId());
+    }
+    
+    /**
+     * Get the current authenticated user from the session
+     * @param session The HTTP session
+     * @return Optional containing the user if authenticated, empty otherwise
+     */
+    public Optional<Utilisateur> getCurrentUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return utilisateurRepository.findById(userId);
+    }
+    
+    /**
+     * Logout the current user
+     * @param session The HTTP session to invalidate
+     */
+    public void logout(HttpSession session) {
+        session.invalidate();
+    }
+}

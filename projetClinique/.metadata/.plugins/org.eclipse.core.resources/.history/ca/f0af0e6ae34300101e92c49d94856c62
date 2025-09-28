@@ -1,0 +1,19 @@
+package com.example.demo.Models;
+
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+
+@Entity
+public class Patient extends Utilisateur {
+
+    @OneToOne(mappedBy = "patient", cascade = CascadeType.ALL)
+    private DossierMedical dossierMedical;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+    private List<RendezVous> rendezVous;
+    
+}

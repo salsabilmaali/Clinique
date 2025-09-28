@@ -1,0 +1,10 @@
+package com.example.demo.Models;
+
+@Entity
+public class Medecin extends Utilisateur {
+
+    private String specialite;
+
+    @OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL)
+    private List<RendezVous> rendezVous;
+}
